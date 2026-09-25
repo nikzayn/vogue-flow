@@ -31,6 +31,9 @@ POST /v1/shop  {query, size?, budget?, occasion?}
   └─ JSON: intent, products, outfit, response, tokens_used, latency_ms, cache_hit, model_tier
 ```
 
+Both endpoints take a raw JSON body and require `Content-Type: application/json`
+(other content types get `415 Unsupported Media Type`).
+
 `POST /v1/shop/stream` runs the same steps and streams the final Claude answer as SSE.
 
 ## Layout
@@ -59,8 +62,13 @@ make run                  # API on :8080
 ```
 
 ```bash
-curl -s localhost:8080/v1/shop -d '{"query":"strapless bra for a wedding dress","budget":80}'
-curl -N localhost:8080/v1/shop/stream -d '{"query":"help me build a date night outfit"}'
+curl -s -X POST localhost:8080/v1/shop \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"strapless bra for a wedding dress","budget":80}'
+
+curl -N -X POST localhost:8080/v1/shop/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"help me build a date night outfit"}'
 make test
 ```
 

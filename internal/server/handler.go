@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mime"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,6 +31,26 @@ type Handler struct {
 // NewHandler creates an HTTP handler
 func NewHandler(orch *agents.Orchestrator, embedder Embedder) *Handler {
 	return &Handler{orchestrator: orch, embedder: embedder}
+}
+
+// maxBodyBytes caps request bodies; a shopping query is a few hundred bytes
+const maxBodyBytes = 1 << 20
+
+// decodeJSON requires an application/json body and decodes it into dst,
+// writing a 415/400 response and returning false on failure
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst interface{}) bool {
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || mediaType != "application/json" {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return false
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
+		return false
+	}
+	return true
 }
 
 // buildQuery validates the request and embeds the query text unless the client sent a vector
@@ -96,8 +117,7 @@ func (h *Handler) handleShop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req ShopRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
@@ -143,8 +163,7 @@ func (h *Handler) handleShopStream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req ShopRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
