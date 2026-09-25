@@ -3,6 +3,7 @@ package agents
 import (
 	"context"
 	"strings"
+	"unicode"
 
 	"github.com/nikzayn/vogueflow/internal/models"
 )
@@ -30,31 +31,41 @@ const (
 	IntentGreeting    Intent = "greeting"
 )
 
-// Classify uses a fast heuristic + optional LLM fallback
+// Classify uses a fast keyword heuristic (whole words, so "white" is not "hi")
 func (ia *IntentAgent) Classify(ctx context.Context, query string) (Intent, error) {
-	lower := strings.ToLower(query)
+	text := normalize(query)
 
 	switch {
-	case containsAny(lower, "hello", "hi", "hey"):
+	case containsAny(text, "hello", "hi", "hey", "thanks", "thank you") && len(strings.Fields(text)) <= 4:
 		return IntentGreeting, nil
-	case containsAny(lower, "size", "fit", "measurement", "bust", "waist"):
-		return IntentSizing, nil
-	case containsAny(lower, "cart", "checkout", "buy", "purchase", "bag", "payment"):
-		return IntentTransaction, nil
-	case containsAny(lower, "outfit", "style", "look", "occasion", "wedding", "date"):
+	case containsAny(text, "outfit", "style", "look", "occasion", "wedding", "date night", "vacation", "wear"):
 		return IntentStyling, nil
-	case containsAny(lower, "angry", "frustrated", "human", "representative", "help"):
-		return IntentEscalation, nil
-	case containsAny(lower, "find", "looking for", "need", "recommend", "suggest"):
+	case containsAny(text, "size", "fit", "measurement", "bust", "waist", "band", "cup"):
+		return IntentSizing, nil
+	case containsAny(text, "cart", "checkout", "buy", "purchase", "bag", "payment"):
+		return IntentTransaction, nil
+	case containsAny(text, "find", "looking for", "need", "recommend", "suggest", "show me"):
 		return IntentDiscovery, nil
 	}
 
 	return IntentDiscovery, nil
 }
 
-func containsAny(s string, subs ...string) bool {
+// normalize lowercases and replaces punctuation with spaces, padding both ends
+func normalize(s string) string {
+	s = strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return unicode.ToLower(r)
+		}
+		return ' '
+	}, s)
+	return " " + strings.Join(strings.Fields(s), " ") + " "
+}
+
+// containsAny reports whether normalized text contains any word/phrase (or its plural)
+func containsAny(text string, subs ...string) bool {
 	for _, sub := range subs {
-		if strings.Contains(s, sub) {
+		if strings.Contains(text, " "+sub+" ") || strings.Contains(text, " "+sub+"s ") {
 			return true
 		}
 	}
