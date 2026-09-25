@@ -1,76 +1,79 @@
 package main
 
-// import (
-// 	"log"
-// 	"net/http"
-// 	"os"
-// 	"runtime"
-// 	"time"
+import (
+	"log"
+	"net/http"
+	"os"
+	"runtime"
+	"time"
 
-// 	"github.com/docker/cli/cli/config"
-// 	"github.com/nikzayn/vogue-flow/internal/pinecone"
-// )
+	"github.com/nikzayn/vogueflow/internal/agents"
+	"github.com/nikzayn/vogueflow/internal/cache"
+	"github.com/nikzayn/vogueflow/internal/config"
+	"github.com/nikzayn/vogueflow/internal/llm"
+	"github.com/nikzayn/vogueflow/internal/pinecone"
+	"github.com/nikzayn/vogueflow/internal/server"
+)
 
-// // import "github.com/docker/cli/cli/config"
+func main() {
+	cfg := config.Load()
 
-// func main() {
-// 	cfg := config.Load()
+	//initialise redis semantic cache
+	semnaticCache := cache.NewSemanticCache(
+		cfg.RedisAddr,
+		cfg.RedisPassword,
+		cfg.RedisDB,
+		cfg.SemanticCacheTTL,
+	)
 
-// 	//initialise redis semantic cache
-// 	semnaticCache := cache.NewSemanticCache(
-// 		cfg.RedisAddr,
-// 		cfg.RedisPasswod,
-// 		cfg.RedisDB,
-// 		cfg.SematicCacheTTL,
-// 	)
+	defer semnaticCache.Close()
 
-// 	defer semnaticCache.Close()
+	//initialise the token cache
+	tokenCache := cache.NewTokenCache(
+		cfg.RedisAddr,
+		cfg.RedisPassword,
+		cfg.RedisDB,
+		cfg.TokenCacheTTL,
+	)
 
-// 	//initialise the token cache
-// 	tokenCache := cache.NewTokenCache(
-// 		cfg.RedisAddr,
-// 		cfg.RedisPasswod,
-// 		cfg.RedisDB,
-// 		cfg.TokenCacheTTL,
-// 	)
+	defer tokenCache.Close()
 
-// 	defer tokenCache.Close()
+	//initialize the pinecone vector store
+	pc := pinecone.NewClient(cfg.PineconeAPIKey, cfg.PineconeIndexHost, cfg.EmbedModel)
 
-// 	//initialize the pinecone vector store
-// 	pc := pinecone.NewClient(cfg.PineconeAPIKey, cfg.PineconeIndexHost)
+	//tier 1: fast/cheap model for greetings and simple lookups
+	tier1 := llm.NewClaudeClient(cfg.ClaudeAPIKey, cfg.ClaudeFastModel, 256)
 
-// 	//local llm models for endpoint testing
-// 	tier1 := &llm.MockTier1{}
+	//tier 2: standard model; tier 3: same model with more room for outfit building
+	tier2 := llm.NewClaudeClient(cfg.ClaudeAPIKey, cfg.ClaudeModel, cfg.ClaudeMaxTokens)
+	tier3 := llm.NewClaudeClient(cfg.ClaudeAPIKey, cfg.ClaudeModel, cfg.ClaudeMaxTokens*2)
+	cascade := llm.NewCascade(tier1, tier2, tier3)
 
-// 	//tier 2 and 3: Claude LLM models
-// 	claude := llm.NewClaudeClient(cfg.ClaudeAPIKey, cfg.ClaudeModel, cfg.ClaudeMaxTokens)
-// 	cascade := llm.NewCascade(tier1, claude, claude)
+	orchestrator := agents.NewOrchestrator(pc, cascade, semnaticCache, tokenCache)
 
-// 	orchestrator := agents.NewOrchestrator(pc, cascade, semnaticCache, tokenCache)
+	//http server; the handler embeds query text via Pinecone when the client sends no embedding
+	handler := server.NewHandler(orchestrator, pc)
+	mux := http.NewServeMux()
+	handler.RegisterRoutes(mux)
 
-// 	//http server
-// 	handler := server.NewHandler(orchestrator)
-// 	mux := http.NewServeMux()
-// 	handler.RegisterRouter(mux)
+	srv := &http.Server{
+		Addr:         ":" + cfg.ServerPort,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
 
-// 	srv := &http.Server{
-// 		Addr:         ":" + cfg.ServerPort,
-// 		Handler:      mux,
-// 		ReadTimeout:  5 * time.Second,
-// 		WriteTimeout: 30 * time.Second,
-// 		IdleTimeout:  120 * time.Second,
-// 	}
+	log.Printf("VogueFlow starting on :%s | GOMAXPROCS=%d", cfg.ServerPort, runtime.GOMAXPROCS(0))
+	log.Printf("Redis %s | Claude tier1=%s tier2/3=%s | Embed: %s", cfg.RedisAddr, cfg.ClaudeFastModel, cfg.ClaudeModel, cfg.EmbedModel)
+	log.Printf("SemanticCacheTTL: %v | TokenCacheTTL: %v", cfg.SemanticCacheTTL, cfg.TokenCacheTTL)
 
-// 	log.Printf("VogueFlow starting on :%s | GOMAXPROCS=%d", cfg.ServerPort, runtime.GOMAXPROCS(0))
-// 	log.Printf("Redis %s | Pinecone: connected | Claude: %s", cfg.RedisAddr, cfg.ClaudeModel)
-// 	log.Printf("SemanticCacheTTL: %v | TokenCacheTTL: %v", cfg.SematicCacheTTL, cfg.TokenCacheTTL)
+	if err := srv.ListenAndServe(); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}
 
-// 	if err := srv.ListenAndServe(); err != nil {
-// 		log.Fatalf("Server failed: %v", err)
-// 	}
-// }
-
-// func init() {
-// 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-// 	log.SetOutput(os.Stdout)
-// }
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetOutput(os.Stdout)
+}

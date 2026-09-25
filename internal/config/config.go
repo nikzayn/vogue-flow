@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -15,6 +16,8 @@ type Config struct {
 	PineconeIndexHost string
 	ClaudeAPIKey      string
 	ClaudeModel       string
+	ClaudeFastModel   string
+	EmbedModel        string
 	ClaudeMaxTokens   int
 	SemanticCacheTTL  time.Duration
 	TokenCacheTTL     time.Duration
@@ -22,22 +25,37 @@ type Config struct {
 	EnableStreaming   bool
 }
 
+// Load reads configuration from the environment. Secrets have no defaults:
+// they must come from the environment (see .env.example), never from source.
 func Load() *Config {
-	return &Config{
+	cfg := &Config{
 		ServerPort:        getEnv("SERVER_PORT", "8080"),
 		RedisAddr:         getEnv("REDIS_ADDR", "localhost:6379"),
 		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
 		RedisDB:           getEnvInt("REDIS_DB", 0),
-		PineconeAPIKey:    getEnv("PINECONE_API_KEY", "pcsk_46axUa_FVrrebnUZQXCotNVvB5SoPodcQhsDKvVv2phJ1FNwXtTfUZN5AQAa3Jk8u53vZj"),
-		PineconeIndexHost: getEnv("PINECONE_INDEX_HOST", "https://llama-text-embed-v2-index-4ndumhq.svc.aped-4627-b74a.pinecone.io"),
+		PineconeAPIKey:    getEnv("PINECONE_API_KEY", ""),
+		PineconeIndexHost: getEnv("PINECONE_INDEX_HOST", ""),
 		ClaudeAPIKey:      getEnv("CLAUDE_API_KEY", ""),
-		ClaudeModel:       getEnv("CLAUDE_MODEL", "claude-sonnet-4-5-20250929"),
+		ClaudeModel:       getEnv("CLAUDE_MODEL", "claude-sonnet-5"),
+		ClaudeFastModel:   getEnv("CLAUDE_FAST_MODEL", "claude-haiku-4-5"),
+		EmbedModel:        getEnv("PINECONE_EMBED_MODEL", "llama-text-embed-v2"),
 		ClaudeMaxTokens:   getEnvInt("CLAUDE_MAX_TOKENS", 1024),
 		SemanticCacheTTL:  getEnvDuration("SEMANTIC_CACHE_TTL", 300),
 		TokenCacheTTL:     getEnvDuration("TOKEN_CACHE_TTL", 3600),
 		MaxRPS:            getEnvInt("MAX_RPS", 20000),
 		EnableStreaming:   getEnvBool("ENABLE_STREAMING", true),
 	}
+
+	for name, v := range map[string]string{
+		"PINECONE_API_KEY":    cfg.PineconeAPIKey,
+		"PINECONE_INDEX_HOST": cfg.PineconeIndexHost,
+		"CLAUDE_API_KEY":      cfg.ClaudeAPIKey,
+	} {
+		if v == "" {
+			log.Fatalf("config: %s is required (copy .env.example to .env and fill it in)", name)
+		}
+	}
+	return cfg
 }
 
 func getEnv(key, fallback string) string {

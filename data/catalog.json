@@ -1,0 +1,710 @@
+[
+  {
+    "id": "bra-001",
+    "name": "Lace Push-Up Bra",
+    "description": "Plunge push-up bra with floral lace cups and adds-one-cup padding for a lifted, defined shape.",
+    "category": "bras",
+    "price": 59.95,
+    "colors": [
+      "black",
+      "red",
+      "blush"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "lace"
+  },
+  {
+    "id": "bra-002",
+    "name": "Smooth T-Shirt Bra",
+    "description": "Seamless lightly lined bra that disappears under fitted tops; all-day comfort with a wire-free option.",
+    "category": "bras",
+    "price": 44.95,
+    "colors": [
+      "nude",
+      "black",
+      "white"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": true,
+    "occasion": "everyday",
+    "fabric": "microfiber"
+  },
+  {
+    "id": "bra-003",
+    "name": "Strapless Multi-Way Bra",
+    "description": "Convertible bra with silicone grip band; wear strapless, halter, crossback or one-shoulder under wedding and party dresses.",
+    "category": "bras",
+    "price": 54.95,
+    "colors": [
+      "nude",
+      "black",
+      "ivory"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": true,
+    "occasion": "wedding",
+    "fabric": "microfiber"
+  },
+  {
+    "id": "bra-004",
+    "name": "Wireless Bralette",
+    "description": "Unlined lace bralette with a scalloped hem and adjustable straps; soft support for lounging or layering.",
+    "category": "bras",
+    "price": 34.95,
+    "colors": [
+      "black",
+      "lavender",
+      "sage"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "lounge",
+    "fabric": "lace"
+  },
+  {
+    "id": "bra-005",
+    "name": "Full-Coverage Minimizer Bra",
+    "description": "Minimizer bra that reduces bust projection up to one inch, with wide cushioned straps for broad shoulders.",
+    "category": "bras",
+    "price": 52.95,
+    "colors": [
+      "nude",
+      "black"
+    ],
+    "sizes": [
+      "34C",
+      "34D",
+      "34DD",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D",
+      "38DD"
+    ],
+    "in_stock": true,
+    "occasion": "everyday",
+    "fabric": "microfiber"
+  },
+  {
+    "id": "bra-006",
+    "name": "Satin Balconette Bra",
+    "description": "Balconette with satin cups and delicate bow detail; lifts and rounds with a sweetheart neckline.",
+    "category": "bras",
+    "price": 62.95,
+    "colors": [
+      "champagne",
+      "red",
+      "emerald"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": false,
+    "occasion": "date night",
+    "fabric": "satin"
+  },
+  {
+    "id": "bra-007",
+    "name": "Bridal Longline Bra",
+    "description": "Ivory longline bra with scalloped lace and a sculpting band; made for bridal gowns and special occasions.",
+    "category": "bras",
+    "price": 79.95,
+    "colors": [
+      "ivory",
+      "white"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": true,
+    "occasion": "wedding",
+    "fabric": "lace"
+  },
+  {
+    "id": "spt-001",
+    "name": "High-Impact Sports Bra",
+    "description": "Encapsulation sports bra with moisture-wicking fabric and adjustable straps for running and HIIT.",
+    "category": "activewear",
+    "price": 49.95,
+    "colors": [
+      "black",
+      "cobalt",
+      "coral"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "workout",
+    "fabric": "performance knit"
+  },
+  {
+    "id": "spt-002",
+    "name": "Seamless Leggings",
+    "description": "High-rise seamless leggings with sculpting knit zones and a no-dig waistband.",
+    "category": "activewear",
+    "price": 59.95,
+    "colors": [
+      "black",
+      "mocha",
+      "plum"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "workout",
+    "fabric": "performance knit"
+  },
+  {
+    "id": "pan-001",
+    "name": "Lace Cheeky Panty",
+    "description": "Cheeky panty with all-over lace and a comfortable cotton gusset.",
+    "category": "panties",
+    "price": 14.5,
+    "colors": [
+      "black",
+      "red",
+      "blush",
+      "ivory"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "lace"
+  },
+  {
+    "id": "pan-002",
+    "name": "No-Show Thong",
+    "description": "Laser-cut thong with no visible lines under leggings and fitted dresses.",
+    "category": "panties",
+    "price": 12.5,
+    "colors": [
+      "nude",
+      "black",
+      "white"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "everyday",
+    "fabric": "microfiber"
+  },
+  {
+    "id": "pan-003",
+    "name": "Cotton Hipster 5-Pack",
+    "description": "Breathable cotton hipsters in a mixed-color five pack.",
+    "category": "panties",
+    "price": 34.95,
+    "colors": [
+      "mixed"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "everyday",
+    "fabric": "cotton"
+  },
+  {
+    "id": "pan-004",
+    "name": "Bridal Lace Thong",
+    "description": "Ivory lace thong with a pearl charm; pairs with the Bridal Longline Bra.",
+    "category": "panties",
+    "price": 19.95,
+    "colors": [
+      "ivory"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "wedding",
+    "fabric": "lace"
+  },
+  {
+    "id": "lng-001",
+    "name": "Lace Teddy",
+    "description": "Plunging lace teddy with a cheeky back and adjustable straps.",
+    "category": "lingerie",
+    "price": 69.95,
+    "colors": [
+      "black",
+      "red"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "lace"
+  },
+  {
+    "id": "lng-002",
+    "name": "Satin Slip Chemise",
+    "description": "Bias-cut satin slip with lace trim at the neckline and hem.",
+    "category": "lingerie",
+    "price": 59.95,
+    "colors": [
+      "champagne",
+      "black",
+      "emerald"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "satin"
+  },
+  {
+    "id": "lng-003",
+    "name": "Garter Belt",
+    "description": "Lace garter belt with adjustable clips; completes a matching set.",
+    "category": "lingerie",
+    "price": 29.95,
+    "colors": [
+      "black",
+      "red",
+      "ivory"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "lace"
+  },
+  {
+    "id": "lng-004",
+    "name": "Corset Bustier",
+    "description": "Boned bustier with hook-and-eye closure that sculpts the waist; works as a top for nights out.",
+    "category": "lingerie",
+    "price": 89.95,
+    "colors": [
+      "black",
+      "ivory"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": false,
+    "occasion": "date night",
+    "fabric": "satin"
+  },
+  {
+    "id": "slp-001",
+    "name": "Satin Pajama Set",
+    "description": "Long-sleeve button-up satin pajama top with piping and matching wide-leg pants.",
+    "category": "sleepwear",
+    "price": 79.95,
+    "colors": [
+      "pink",
+      "navy",
+      "ivory"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "lounge",
+    "fabric": "satin"
+  },
+  {
+    "id": "slp-002",
+    "name": "Modal Cami Set",
+    "description": "Buttery-soft modal cami and shorts set for warm nights.",
+    "category": "sleepwear",
+    "price": 49.95,
+    "colors": [
+      "heather gray",
+      "sage",
+      "black"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "lounge",
+    "fabric": "modal"
+  },
+  {
+    "id": "slp-003",
+    "name": "Plush Robe",
+    "description": "Cozy plush robe with a shawl collar, tie waist and deep pockets.",
+    "category": "sleepwear",
+    "price": 69.95,
+    "colors": [
+      "pink",
+      "white",
+      "gray"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "lounge",
+    "fabric": "plush"
+  },
+  {
+    "id": "slp-004",
+    "name": "Bride Satin Robe",
+    "description": "Short satin robe with 'Bride' embroidery; perfect for getting-ready photos.",
+    "category": "sleepwear",
+    "price": 64.95,
+    "colors": [
+      "ivory",
+      "white"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "wedding",
+    "fabric": "satin"
+  },
+  {
+    "id": "swm-001",
+    "name": "Push-Up Bikini Top",
+    "description": "Padded push-up bikini top with removable straps.",
+    "category": "swim",
+    "price": 44.95,
+    "colors": [
+      "black",
+      "coral",
+      "leopard"
+    ],
+    "sizes": [
+      "32A",
+      "32B",
+      "32C",
+      "34A",
+      "34B",
+      "34C",
+      "34D",
+      "34DD",
+      "36B",
+      "36C",
+      "36D",
+      "36DD",
+      "38C",
+      "38D"
+    ],
+    "in_stock": true,
+    "occasion": "vacation",
+    "fabric": "swim knit"
+  },
+  {
+    "id": "swm-002",
+    "name": "Cheeky Bikini Bottom",
+    "description": "Cheeky-cut bikini bottom with side ties.",
+    "category": "swim",
+    "price": 34.95,
+    "colors": [
+      "black",
+      "coral",
+      "leopard"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "vacation",
+    "fabric": "swim knit"
+  },
+  {
+    "id": "swm-003",
+    "name": "One-Piece Swimsuit",
+    "description": "Plunge one-piece with a cut-out back and tummy-smoothing lining.",
+    "category": "swim",
+    "price": 79.95,
+    "colors": [
+      "black",
+      "emerald"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "vacation",
+    "fabric": "swim knit"
+  },
+  {
+    "id": "swm-004",
+    "name": "Crochet Cover-Up Dress",
+    "description": "Open-knit crochet cover-up dress for beach to bar.",
+    "category": "swim",
+    "price": 59.95,
+    "colors": [
+      "white",
+      "sand"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "in_stock": true,
+    "occasion": "vacation",
+    "fabric": "cotton"
+  },
+  {
+    "id": "bty-001",
+    "name": "Signature Eau de Parfum",
+    "description": "Warm fragrance with notes of peony, vanilla orchid and musk.",
+    "category": "beauty",
+    "price": 85.0,
+    "colors": [
+      "n/a"
+    ],
+    "sizes": [
+      "50ml",
+      "100ml"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "n/a"
+  },
+  {
+    "id": "bty-002",
+    "name": "Fragrance Body Mist",
+    "description": "Light, fruity body mist for everyday wear.",
+    "category": "beauty",
+    "price": 22.0,
+    "colors": [
+      "n/a"
+    ],
+    "sizes": [
+      "250ml"
+    ],
+    "in_stock": true,
+    "occasion": "everyday",
+    "fabric": "n/a"
+  },
+  {
+    "id": "bty-003",
+    "name": "Shimmer Body Lotion",
+    "description": "Hydrating lotion with a subtle golden shimmer for glowing skin.",
+    "category": "beauty",
+    "price": 24.0,
+    "colors": [
+      "n/a"
+    ],
+    "sizes": [
+      "236ml"
+    ],
+    "in_stock": false,
+    "occasion": "vacation",
+    "fabric": "n/a"
+  },
+  {
+    "id": "bty-004",
+    "name": "Tinted Lip Oil",
+    "description": "Glossy, non-sticky tinted lip oil.",
+    "category": "beauty",
+    "price": 16.0,
+    "colors": [
+      "rose",
+      "berry",
+      "clear"
+    ],
+    "sizes": [
+      "one size"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "n/a"
+  },
+  {
+    "id": "acc-001",
+    "name": "Satin Sleep Mask",
+    "description": "Soft satin eye mask with an adjustable band.",
+    "category": "accessories",
+    "price": 19.95,
+    "colors": [
+      "pink",
+      "black"
+    ],
+    "sizes": [
+      "one size"
+    ],
+    "in_stock": true,
+    "occasion": "lounge",
+    "fabric": "satin"
+  },
+  {
+    "id": "acc-002",
+    "name": "Mini Crossbody Bag",
+    "description": "Quilted mini crossbody with gold hardware and a chain strap.",
+    "category": "accessories",
+    "price": 59.95,
+    "colors": [
+      "black",
+      "pink"
+    ],
+    "sizes": [
+      "one size"
+    ],
+    "in_stock": true,
+    "occasion": "date night",
+    "fabric": "faux leather"
+  }
+]

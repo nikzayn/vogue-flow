@@ -7,18 +7,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/nikzayn/vogueflow/internal/models"
 	"github.com/redis/go-redis/v9"
 )
 
-// Semantic Cache implements caching using vector similarity
-// Storing embedding + response in Redis, on lookup we fetch candidate keys and do cosine similarity check
+// SemanticCache returns a previous answer when a new query means (nearly) the same thing.
+// Entries are bucketed by the structured filters (size, budget, occasion) so a cached
+// answer is never served for a different filter set; within a bucket, the most recent
+// entries are scanned and the best cosine match above simThreshold wins.
 type SemanticCache struct {
 	client       *redis.Client
 	simThreshold float64
+	maxEntries   int64
 	ttl          time.Duration
+}
+
+type semanticEntry struct {
+	Embedding []float32         `json:"embedding"`
+	State     models.AgentState `json:"state"`
 }
 
 // Orechestrator function which creates a new semantic cache
@@ -31,55 +40,70 @@ func NewSemanticCache(addr, password string, db int, ttl time.Duration) *Semanti
 			PoolSize: 100,
 		}),
 		simThreshold: 0.94,
+		maxEntries:   200,
 		ttl:          ttl,
 	}
 }
 
-// Generates a deterministic redis key from embedding vector
-func (sc *SemanticCache) embeddingKey(emb []float32) string {
-	b := make([]byte, len(emb)*4)
-
-	for i, v := range emb {
-		_ = v
-		_ = i
-		_ = b
-	}
-
+// bucketKey scopes cache entries to the query's structured filters
+func (sc *SemanticCache) bucketKey(q models.Query) string {
 	h := sha256.New()
-	for _, v := range emb {
-		h.Write([]byte(fmt.Sprintf("%.6f,", v)))
-	}
+	fmt.Fprintf(h, "%s|%.2f|%s", strings.ToLower(q.Size), q.Budget, strings.ToLower(q.Occasion))
 	return "semantic:" + hex.EncodeToString(h.Sum(nil))[:16]
 }
 
-// Gets cached response by query embedding
-func (sc *SemanticCache) Get(ctx context.Context, embedding []float32) (*models.AgentState, bool) {
-	key := sc.embeddingKey(embedding)
-	val, err := sc.client.Get(ctx, key).Result()
+// Get returns the most similar cached response in the query's bucket, if any clears the threshold
+func (sc *SemanticCache) Get(ctx context.Context, q models.Query) (*models.AgentState, bool) {
+	if len(q.Embedding) == 0 {
+		return nil, false
+	}
+
+	raw, err := sc.client.LRange(ctx, sc.bucketKey(q), 0, sc.maxEntries-1).Result()
 	if err != nil {
 		return nil, false
 	}
 
-	var state models.AgentState
-	if err := json.Unmarshal([]byte(val), &state); err != nil {
+	var best *models.AgentState
+	bestSim := sc.simThreshold
+	for _, item := range raw {
+		var entry semanticEntry
+		if err := json.Unmarshal([]byte(item), &entry); err != nil {
+			continue
+		}
+		if sim := cosineSimilarity(q.Embedding, entry.Embedding); sim >= bestSim {
+			bestSim = sim
+			state := entry.State
+			best = &state
+		}
+	}
+	if best == nil {
 		return nil, false
 	}
-	state.CacheHit = true
-	return &state, true
+	best.CacheHit = true
+	return best, true
 }
 
-// Sets stores a successful response keyed by embedding
-func (sc *SemanticCache) Set(ctx context.Context, embedding []float32, state *models.AgentState) error {
-	key := sc.embeddingKey(embedding)
-	data, err := json.Marshal(state)
+// Set stores a successful response alongside its query embedding
+func (sc *SemanticCache) Set(ctx context.Context, q models.Query, state *models.AgentState) error {
+	if len(q.Embedding) == 0 {
+		return nil
+	}
+
+	data, err := json.Marshal(semanticEntry{Embedding: q.Embedding, State: *state})
 	if err != nil {
 		return err
 	}
 
-	return sc.client.Set(ctx, key, data, sc.ttl).Err()
+	key := sc.bucketKey(q)
+	pipe := sc.client.TxPipeline()
+	pipe.LPush(ctx, key, data)
+	pipe.LTrim(ctx, key, 0, sc.maxEntries-1)
+	pipe.Expire(ctx, key, sc.ttl)
+	_, err = pipe.Exec(ctx)
+	return err
 }
 
-// Following invalidation strategy which computes cosine b/w 2 float32 vectors
+// cosineSimilarity computes cosine similarity between 2 float32 vectors
 func cosineSimilarity(a, b []float32) float64 {
 	if len(a) != len(b) {
 		return 0

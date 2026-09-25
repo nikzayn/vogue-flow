@@ -3,6 +3,7 @@ package agents
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/nikzayn/vogueflow/internal/models"
@@ -54,9 +55,12 @@ func (da *DiscoveryAgent) Discover(ctx context.Context, state *models.AgentState
 // reRank applies business logic: boost new arrivals, penalize low stock
 func (da *DiscoveryAgent) reRank(products []models.Product, query models.Query) []models.Product {
 	for i := range products {
-		if products[i].Price < query.Budget*0.8 {
+		if query.Budget > 0 && products[i].Price < query.Budget*0.8 {
 			products[i].Score += 0.02
 		}
 	}
+	sort.SliceStable(products, func(i, j int) bool {
+		return products[i].Score > products[j].Score
+	})
 	return products
 }
