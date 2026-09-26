@@ -54,6 +54,7 @@ func (o *Orchestrator) Execute(ctx context.Context, query models.Query) (*models
 	// L1: Semantic Cache Check
 	if cached, hit := o.semanticCache.Get(ctx, query); hit {
 		cached.LatencyMs = time.Since(start).Milliseconds()
+		cached.TokensUsed = 0 // no LLM call was made for this request
 		return cached, nil
 	}
 

@@ -22,14 +22,14 @@ type ClaudeClient struct {
 }
 
 // Claude API client
-func NewClaudeClient(apiKey, model string, maxTokens int) *ClaudeClient {
+func NewClaudeClient(apiKey, model string, maxTokens int, timeout time.Duration) *ClaudeClient {
 	return &ClaudeClient{
 		apiKey:    apiKey,
 		model:     model,
 		maxTokens: maxTokens,
 		endpoint:  "https://api.anthropic.com/v1/messages",
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: timeout,
 			Transport: &http.Transport{
 				MaxIdleConns:        200,
 				MaxIdleConnsPerHost: 200,

@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VogueFlow Console</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --surface-2:   #f3f2ef;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --muted:       #898781;
+    --grid:        #e1e0d9;
+    --axis:        #c3c2b7;
+    --border:      rgba(11, 11, 11, 0.10);
+    --accent:      #2a78d6;
+    --accent-ink:  #ffffff;
+    --series-1:    #2a78d6;  /* cache miss / single series */
+    --series-2:    #eb6834;  /* cache hit */
+    --critical:    #d03b3b;
+    --good-ink:    #006300;
+    --radius:      10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242423;
+      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+      --accent: #3987e5; --series-1: #3987e5; --series-2: #d95926; --good-ink: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242423;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5; --series-1: #3987e5; --series-2: #d95926; --good-ink: #0ca30c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header .spacer { flex: 1; }
+  .health { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+  .health i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .health.ok i { background: #0ca30c; }
+  .health.down i { background: var(--critical); }
+
+  main {
+    display: grid; gap: 16px; padding: 16px 20px 32px;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    max-width: 1500px; margin: 0 auto;
+  }
+  @media (max-width: 980px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; } }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; min-width: 0;
+  }
+  .card h2 { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .card .desc { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+
+  label { display: block; font-size: 12px; color: var(--ink-2); margin-bottom: 4px; }
+  input, select, textarea {
+    width: 100%; font: inherit; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  .row { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
+  .actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    font: inherit; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--ink);
+  }
+  button.primary { background: var(--accent); border-color: transparent; color: var(--accent-ink); font-weight: 600; }
+  button:disabled { opacity: 0.55; cursor: progress; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; color: var(--ink-2); padding: 7px 12px; }
+  .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+  .hint { color: var(--muted); font-size: 12px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 5px 10px; font-size: 12px; border-radius: 999px;
+    background: var(--page); color: var(--ink-2);
+  }
+  .chip:hover { color: var(--ink); background: var(--surface-2); }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .badge {
+    font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--surface-2);
+    color: var(--ink-2); font-variant-numeric: tabular-nums;
+  }
+  .badge b { color: var(--ink); font-weight: 600; }
+  .answer { white-space: pre-wrap; font-size: 15px; line-height: 1.55; min-height: 24px; }
+  .answer.error { color: var(--critical); }
+  .answer.empty { color: var(--muted); }
+  .products { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); margin-top: 14px; }
+  .product {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--page);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .product.outfit { border-color: var(--accent); }
+  .product .name { font-weight: 600; font-size: 13px; }
+  .product .meta { color: var(--muted); font-size: 12px; }
+  .product .price { font-size: 13px; }
+  .product .tag { font-size: 11px; color: var(--accent); font-weight: 600; }
+  .section-label { font-size: 12px; color: var(--muted); margin: 14px 0 0; }
+
+  .kpis { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  @media (max-width: 1200px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .kpi .k-label { color: var(--ink-2); font-size: 12px; }
+  .kpi .k-value { font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .kpi .k-note { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  .grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 1200px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .chart .empty-note { color: var(--muted); font-size: 12px; padding: 24px 0; text-align: center; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .hit { fill: transparent; cursor: default; }
+  .bar { transition: opacity 0.12s; }
+  .chart .hovered .bar { opacity: 0.75; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 10; display: none;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    max-width: 260px;
+  }
+  .tooltip .tv { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tooltip .tl { color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+  .tooltip .key { width: 12px; height: 2px; display: inline-block; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.q { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+  .status-err { color: var(--critical); font-weight: 600; }
+  .full { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>VogueFlow Console</h1>
+  <span class="sub">Shopping assistant API · RAG + model cascade</span>
+  <span class="spacer"></span>
+  <span class="health" id="health"><i></i><span>checking…</span></span>
+  <button id="theme" type="button" title="Toggle light/dark">Theme</button>
+</header>
+
+<main>
+  <!-- Left: ask + result -->
+  <div class="col">
+    <section class="card" aria-labelledby="ask-h">
+      <h2 id="ask-h">Ask the assistant</h2>
+      <p class="desc">Sends a raw JSON body to <code>/v1/shop</code> (or <code>/v1/shop/stream</code> in stream mode).</p>
+      <form id="ask">
+        <label for="query">Query</label>
+        <textarea id="query" required placeholder="e.g. strapless bra for a wedding dress"></textarea>
+        <div class="row">
+          <div><label for="size">Size</label><input id="size" placeholder="34D, M…"></div>
+          <div><label for="budget">Budget ($)</label><input id="budget" type="number" min="0" step="1" placeholder="80"></div>
+          <div>
+            <label for="occasion">Occasion</label>
+            <select id="occasion">
+              <option value="">Any</option>
+              <option>everyday</option><option>date night</option><option>wedding</option>
+              <option>vacation</option><option>lounge</option><option>workout</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="send" type="submit">Send</button>
+          <div class="seg" role="group" aria-label="Response mode">
+            <button type="button" data-mode="json" aria-pressed="true">JSON</button>
+            <button type="button" data-mode="stream" aria-pressed="false">Stream (SSE)</button>
+          </div>
+          <span class="hint" id="send-hint"></span>
+        </div>
+      </form>
+      <p class="section-label">Scenarios</p>
+      <div class="chips" id="presets"></div>
+      <div class="actions">
+        <button type="button" id="run-all">Run all scenarios</button>
+        <span class="hint">Runs each scenario once in JSON mode. Cache misses call Claude and cost tokens.</span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="res-h" aria-live="polite">
+      <h2 id="res-h">Response</h2>
+      <p class="desc" id="res-desc">Send a query to see the answer, routing details and retrieved products.</p>
+      <div class="badges" id="badges"></div>
+      <div class="answer empty" id="answer">No request yet.</div>
+      <div id="outfit-wrap"></div>
+      <div id="products-wrap"></div>
+    </section>
+  </div>
+
+  <!-- Right: metrics -->
+  <div class="col">
+    <div class="kpis" id="kpis"></div>
+
+    <section class="card" aria-labelledby="lat-h">
+      <h2 id="lat-h">Latency per request</h2>
+      <p class="desc">Milliseconds, in request order. Dots on the baseline are requests too fast to draw as a column (cache hits, static replies). JSON requests only; streamed requests appear in the log.</p>
+      <div class="legend">
+        <span><i style="background:var(--series-1)"></i>Cache miss</span>
+        <span><i style="background:var(--series-2)"></i>Cache hit</span>
+      </div>
+      <div class="chart" id="chart-latency"></div>
+    </section>
+
+    <section class="card" aria-labelledby="tok-h">
+      <h2 id="tok-h">Tokens used per request</h2>
+      <p class="desc">Claude input + output tokens for each JSON request (0 = static reply or cache hit).</p>
+      <div class="chart" id="chart-tokens"></div>
+    </section>
+
+    <div class="grid-2">
+      <section class="card" aria-labelledby="tier-h">
+        <h2 id="tier-h">Model tier</h2>
+        <p class="desc">Requests routed to each tier.</p>
+        <div class="chart" id="chart-tier"></div>
+      </section>
+      <section class="card" aria-labelledby="int-h">
+        <h2 id="int-h">Intent</h2>
+        <p class="desc">Requests by classified intent.</p>
+        <div class="chart" id="chart-intent"></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card full" aria-labelledby="log-h">
+    <div class="actions" style="margin:0 0 8px">
+      <h2 id="log-h" style="margin:0">Request log</h2>
+      <span class="spacer" style="flex:1"></span>
+      <button type="button" id="export">Export JSON</button>
+      <button type="button" id="clear">Clear history</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th class="num">#</th><th>Time</th><th>Mode</th><th>Query</th><th>Status</th><th>Intent</th>
+          <th class="num">Tier</th><th class="num">Tokens</th><th>Cache</th>
+          <th class="num">Latency (ms)</th><th class="num">First token (ms)</th><th class="num">Products</th>
+        </tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+
+<script>
+"use strict";
+
+// ---------- state & persistence ----------
+const STORE_KEY = "vogueflow.history.v1";
+let history = [];
+try { history = JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); } catch (_) { history = []; }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(history.slice(-500))); } catch (_) {} }
+
+let mode = "json";
+let busy = false;
+
+const PRESETS = [
+  { label: "Greeting", body: { query: "hi" } },
+  { label: "Stock check (tier 1)", body: { query: "Is the satin robe in stock?" } },
+  { label: "Discovery", body: { query: "show me black lace bras", budget: 70 } },
+  { label: "Filters", body: { query: "swimsuit for my beach trip", size: "M", occasion: "vacation", budget: 80 } },
+  { label: "Outfit (tier 3)", body: { query: "Help me build a date night outfit", budget: 150 } },
+  { label: "Sizing", body: { query: "What size bra should I order? My band is 34 and cup is D", size: "34D" } },
+  { label: "Cart", body: { query: "Add the lace push-up bra to my cart and checkout" } },
+  { label: "Escalation", body: { query: "I want a refund, my order arrived broken" } },
+];
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+function el(tag, attrs, text) {
+  const n = document.createElement(tag);
+  if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+const fmt = (n) => (n == null || Number.isNaN(n) ? "—" : Math.round(n).toLocaleString());
+function compact(n) {
+  if (n == null) return "—";
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1e4) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+  return Math.round(n).toLocaleString();
+}
+// Axis ticks share one format: all "K" when the axis tops out at 10,000+, else plain comma numbers.
+function axisFormatter(max) {
+  if (max < 1e4) return (v) => Math.round(v).toLocaleString();
+  return (v) => (v === 0 ? "0" : (v / 1e3).toFixed(1).replace(/\.0$/, "") + "K");
+}
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+  return 10 * p;
+}
+function percentile(arr, p) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  return s[Math.min(s.length - 1, Math.ceil((p / 100) * s.length) - 1)];
+}
+const TIER_LABEL = { 0: "No model", 1: "Tier 1 · Haiku", 2: "Tier 2 · Sonnet", 3: "Tier 3 · Sonnet+" };
+const INTENTS = ["greeting", "discovery", "styling", "sizing", "transaction", "escalation"];
+
+// ---------- tooltip ----------
+const tip = $("tooltip");
+function showTip(evt, value, label, color) {
+  tip.replaceChildren();
+  tip.append(el("div", { class: "tv" }, value));
+  const l = el("div", { class: "tl" });
+  if (color) { const k = el("i", { class: "key" }); k.style.background = color; l.append(k); }
+  l.append(document.createTextNode(label));
+  tip.append(l);
+  tip.style.display = "block";
+  const r = tip.getBoundingClientRect();
+  let x = evt.clientX + 12, y = evt.clientY + 12;
+  if (x + r.width > window.innerWidth - 8) x = evt.clientX - r.width - 12;
+  if (y + r.height > window.innerHeight - 8) y = evt.clientY - r.height - 12;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+// Column path: 4px rounded top, square at the baseline.
+function columnPath(x, y, w, h) {
+  if (h <= 0) return "";
+  const r = Math.min(4, w / 2, h);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+// Horizontal bar path: square at the baseline (left), 4px rounded data end (right).
+function hbarPath(x, y, w, h) {
+  if (w <= 0) return "";
+  const r = Math.min(4, h / 2, w);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+
+// ---------- column chart (per request) ----------
+function columnChart(container, points, opts) {
+  container.replaceChildren();
+  if (!points.length) { container.append(el("div", { class: "empty-note" }, "No JSON requests yet.")); return; }
+  const W = Math.max(container.clientWidth, 280), H = 190;
+  const m = { top: 10, right: 8, bottom: 26, left: 52 };
+  const iw = W - m.left - m.right, ih = H - m.top - m.bottom;
+  const max = niceMax(Math.max(...points.map((p) => p.value), 0));
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": opts.aria });
+
+  const ticks = 4, tickFmt = axisFormatter(max);
+  for (let i = 0; i <= ticks; i++) {
+    const v = (max / ticks) * i, y = m.top + ih - (v / max) * ih;
+    s.append(svg("line", { x1: m.left, x2: W - m.right, y1: y, y2: y, stroke: i === 0 ? cssVar("--axis") : cssVar("--grid"), "stroke-width": 1, "shape-rendering": "crispEdges" }));
+    const t = svg("text", { x: m.left - 8, y: y + 4, "text-anchor": "end", "font-size": 11, fill: cssVar("--muted"), "font-variant-numeric": "tabular-nums" });
+    t.textContent = tickFmt(v);
+    s.append(t);
+  }
+
+  const band = iw / points.length;
+  const bw = Math.max(2, Math.min(24, band - 2)); // <= 24px, 2px surface gap between neighbors
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.floor(iw / 28)));
+  points.forEach((p, i) => {
+    const x = m.left + i * band + (band - bw) / 2;
+    const h = (p.value / max) * ih, y = m.top + ih - h;
+    const g = svg("g", {});
+    if (h >= 2) {
+      g.append(svg("path", { d: columnPath(x, y, bw, h), fill: p.color, class: "bar" }));
+    } else {
+      // Too small to read as a column (e.g. a 3 ms cache hit): mark the value on the baseline
+      // with an 8px dot in the series color, ringed in the surface color.
+      g.append(svg("circle", { cx: x + bw / 2, cy: m.top + ih, r: 4, fill: p.color, stroke: cssVar("--surface"), "stroke-width": 2, class: "bar" }));
+    }
+    const hit = svg("rect", { x: m.left + i * band, y: m.top, width: band, height: ih, class: "hit" });
+    hit.addEventListener("pointermove", (e) => { g.classList.add("hovered"); showTip(e, p.tipValue, p.tipLabel, p.color); });
+    hit.addEventListener("pointerleave", () => { g.classList.remove("hovered"); hideTip(); });
+    g.append(hit);
+    s.append(g);
+    if (i % labelEvery === 0 || i === points.length - 1) {
+      const t = svg("text", { x: m.left + i * band + band / 2, y: H - 6, "text-anchor": "middle", "font-size": 11, fill: cssVar("--muted"), "font-variant-numeric": "tabular-nums" });
+      t.textContent = "#" + p.n;
+      s.append(t);
+    }
+  });
+  container.append(s);
+}
+
+// ---------- horizontal bar chart (counts by category) ----------
+function barChart(container, rows, aria) {
+  container.replaceChildren();
+  if (!rows.some((r) => r.value > 0)) { container.append(el("div", { class: "empty-note" }, "No data yet.")); return; }
+  const W = Math.max(container.clientWidth, 240);
+  const rowH = 30, bh = 18;
+  const m = { top: 4, right: 36, bottom: 4, left: 118 };
+  const H = m.top + m.bottom + rows.length * rowH;
+  const iw = W - m.left - m.right;
+  const max = Math.max(...rows.map((r) => r.value), 1);
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": aria });
+  s.append(svg("line", { x1: m.left, x2: m.left, y1: m.top, y2: H - m.bottom, stroke: cssVar("--axis"), "stroke-width": 1, "shape-rendering": "crispEdges" }));
+  const color = cssVar("--series-1");
+  rows.forEach((r, i) => {
+    const y = m.top + i * rowH + (rowH - bh) / 2;
+    const w = (r.value / max) * iw;
+    const lab = svg("text", { x: m.left - 8, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 12, fill: cssVar("--ink-2") });
+    lab.textContent = r.label;
+    s.append(lab);
+    const g = svg("g", {});
+    const d = hbarPath(m.left, y, w, bh);
+    if (d) g.append(svg("path", { d, fill: color, class: "bar" }));
+    const val = svg("text", { x: m.left + w + 6, y: y + bh / 2 + 4, "font-size": 12, fill: cssVar("--ink"), "font-variant-numeric": "tabular-nums" });
+    val.textContent = r.value.toLocaleString();
+    g.append(val);
+    const hit = svg("rect", { x: 0, y: m.top + i * rowH, width: W, height: rowH, class: "hit" });
+    const share = Math.round((r.value / r.total) * 100);
+    hit.addEventListener("pointermove", (e) => { g.classList.add("hovered"); showTip(e, `${r.value} request${r.value === 1 ? "" : "s"} · ${share}%`, r.label, color); });
+    hit.addEventListener("pointerleave", () => { g.classList.remove("hovered"); hideTip(); });
+    g.append(hit);
+    s.append(g);
+  });
+  container.append(s);
+}
+
+// ---------- render dashboard ----------
+function renderKpis() {
+  const json = history.filter((h) => h.mode === "json" && h.ok);
+  const lat = json.map((h) => h.latency);
+  const hits = json.filter((h) => h.cacheHit).length;
+  const tokens = json.reduce((a, h) => a + (h.tokens || 0), 0);
+  const errors = history.filter((h) => !h.ok).length;
+  const tiles = [
+    ["Requests", compact(history.length), errors ? `${errors} failed` : "all succeeded"],
+    ["Cache hit rate", json.length ? Math.round((hits / json.length) * 100) + "%" : "—", `${hits} of ${json.length} JSON requests`],
+    ["Avg latency", lat.length ? compact(lat.reduce((a, b) => a + b, 0) / lat.length) + " ms" : "—", "JSON requests, end to end"],
+    ["p95 latency", lat.length ? compact(percentile(lat, 95)) + " ms" : "—", "JSON requests"],
+    ["Tokens used", compact(tokens), "sum across JSON requests"],
+  ];
+  const wrap = $("kpis");
+  wrap.replaceChildren();
+  for (const [label, value, note] of tiles) {
+    const k = el("div", { class: "kpi" });
+    k.append(el("div", { class: "k-label" }, label), el("div", { class: "k-value" }, value), el("div", { class: "k-note" }, note));
+    wrap.append(k);
+  }
+}
+
+function renderCharts() {
+  const json = history.filter((h) => h.mode === "json" && h.ok);
+  const c1 = cssVar("--series-1"), c2 = cssVar("--series-2");
+  columnChart($("chart-latency"), json.map((h) => ({
+    n: h.n, value: h.latency, color: h.cacheHit ? c2 : c1,
+    tipValue: `${fmt(h.latency)} ms`,
+    tipLabel: `#${h.n} · ${h.cacheHit ? "cache hit" : "cache miss"} · ${h.intent || "—"}`,
+  })), { aria: "Latency per JSON request in milliseconds" });
+  columnChart($("chart-tokens"), json.map((h) => ({
+    n: h.n, value: h.tokens || 0, color: c1,
+    tipValue: `${fmt(h.tokens)} tokens`,
+    tipLabel: `#${h.n} · tier ${h.tier} · ${h.intent || "—"}`,
+  })), { aria: "Tokens used per JSON request" });
+
+  const total = json.length;
+  const tierCounts = [0, 1, 2, 3].map((t) => ({ label: TIER_LABEL[t], value: json.filter((h) => h.tier === t).length, total }));
+  barChart($("chart-tier"), tierCounts.filter((r, i) => i > 0 || r.value > 0), "Requests per model tier");
+  const intentRows = INTENTS.map((i) => ({ label: i, value: json.filter((h) => h.intent === i).length, total }));
+  barChart($("chart-intent"), intentRows, "Requests per intent");
+}
+
+function renderLog() {
+  const body = $("log");
+  body.replaceChildren();
+  for (const h of [...history].reverse()) {
+    const tr = el("tr");
+    const td = (text, cls) => { const c = el("td", cls ? { class: cls } : null, text); tr.append(c); return c; };
+    td(String(h.n), "num");
+    td(new Date(h.at).toLocaleTimeString());
+    td(h.mode === "json" ? "JSON" : "Stream");
+    const q = td(h.query, "q"); q.title = h.query;
+    const st = td(String(h.status)); if (!h.ok) st.className = "status-err";
+    td(h.intent || "—");
+    td(h.tier == null ? "—" : String(h.tier), "num");
+    td(h.tokens == null ? "—" : fmt(h.tokens), "num");
+    td(h.cacheHit == null ? "—" : h.cacheHit ? "hit" : "miss");
+    td(fmt(h.latency), "num");
+    td(h.ttft == null ? "—" : fmt(h.ttft), "num");
+    td(h.products == null ? "—" : String(h.products), "num");
+    body.append(tr);
+  }
+}
+
+function renderAll() { renderKpis(); renderCharts(); renderLog(); }
+
+// ---------- result panel ----------
+function badge(label, value) {
+  const b = el("span", { class: "badge" });
+  b.append(document.createTextNode(label + " "), el("b", null, value));
+  return b;
+}
+function productCard(p, isOutfit) {
+  const c = el("div", { class: "product" + (isOutfit ? " outfit" : "") });
+  if (isOutfit) c.append(el("span", { class: "tag" }, "In the outfit"));
+  c.append(el("span", { class: "name" }, p.name || p.id));
+  c.append(el("span", { class: "price" }, "$" + Number(p.price || 0).toFixed(2)));
+  c.append(el("span", { class: "meta" }, [p.category, (p.colors || []).join(", ")].filter(Boolean).join(" · ")));
+  if (p.metadata && p.metadata.occasion) c.append(el("span", { class: "meta" }, "Occasion: " + p.metadata.occasion));
+  c.append(el("span", { class: "meta" }, "Match score " + Number(p.score || 0).toFixed(3)));
+  return c;
+}
+function showResult(data, meta) {
+  $("res-desc").textContent = meta;
+  const badges = $("badges");
+  badges.replaceChildren(
+    badge("intent", data.intent || "—"),
+    badge("tier", data.model_tier == null ? "—" : String(data.model_tier)),
+    badge("tokens", fmt(data.tokens_used)),
+    badge("cache", data.cache_hit ? "hit" : "miss"),
+    badge("latency", fmt(data.latency_ms) + " ms"),
+  );
+  const ans = $("answer");
+  ans.className = "answer";
+  ans.textContent = data.response || "";
+  const outfit = data.outfit || [], products = data.products || [];
+  const outfitIds = new Set(outfit.map((p) => p.id));
+  const ow = $("outfit-wrap"), pw = $("products-wrap");
+  ow.replaceChildren(); pw.replaceChildren();
+  if (products.length) {
+    pw.append(el("p", { class: "section-label" }, `Retrieved products (${products.length}, ranked)`));
+    const grid = el("div", { class: "products" });
+    products.forEach((p) => grid.append(productCard(p, outfitIds.has(p.id))));
+    pw.append(grid);
+  }
+}
+function showError(text) {
+  $("badges").replaceChildren();
+  $("outfit-wrap").replaceChildren(); $("products-wrap").replaceChildren();
+  const ans = $("answer");
+  ans.className = "answer error";
+  ans.textContent = text;
+}
+
+// ---------- requests ----------
+function readForm() {
+  const body = { query: $("query").value.trim() };
+  const size = $("size").value.trim(), budget = parseFloat($("budget").value), occasion = $("occasion").value;
+  if (size) body.size = size;
+  if (!Number.isNaN(budget) && budget > 0) body.budget = budget;
+  if (occasion) body.occasion = occasion;
+  return body;
+}
+function fillForm(body) {
+  $("query").value = body.query || "";
+  $("size").value = body.size || "";
+  $("budget").value = body.budget || "";
+  $("occasion").value = body.occasion || "";
+}
+function record(entry) {
+  entry.n = (history.length ? history[history.length - 1].n : 0) + 1;
+  entry.at = Date.now();
+  history.push(entry);
+  save();
+  renderAll();
+}
+
+async function sendJSON(body) {
+  const t0 = performance.now();
+  let res, text;
+  try {
+    res = await fetch("/v1/shop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    text = await res.text();
+  } catch (err) {
+    record({ mode: "json", query: body.query, ok: false, status: "network", latency: performance.now() - t0 });
+    showError("Network error: is the server running? " + err.message);
+    return;
+  }
+  const clientMs = performance.now() - t0;
+  if (!res.ok) {
+    record({ mode: "json", query: body.query, ok: false, status: res.status, latency: clientMs });
+    showError(`HTTP ${res.status}: ${text.trim()}`);
+    return;
+  }
+  const data = JSON.parse(text);
+  record({
+    mode: "json", query: body.query, ok: true, status: res.status,
+    intent: data.intent, tier: data.model_tier, tokens: data.tokens_used, cacheHit: data.cache_hit,
+    latency: data.latency_ms, products: (data.products || []).length,
+  });
+  showResult(data, `Server latency ${fmt(data.latency_ms)} ms · round trip ${fmt(clientMs)} ms`);
+}
+
+async function sendStream(body) {
+  const t0 = performance.now();
+  let ttft = null;
+  $("badges").replaceChildren(badge("mode", "stream"));
+  $("outfit-wrap").replaceChildren(); $("products-wrap").replaceChildren();
+  $("res-desc").textContent = "Streaming… (SSE carries text only; intent, tier and tokens come from JSON mode)";
+  const ans = $("answer");
+  ans.className = "answer"; ans.textContent = "";
+  let res;
+  try {
+    res = await fetch("/v1/shop/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch (err) {
+    record({ mode: "stream", query: body.query, ok: false, status: "network", latency: performance.now() - t0 });
+    showError("Network error: is the server running? " + err.message);
+    return;
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    record({ mode: "stream", query: body.query, ok: false, status: res.status, latency: performance.now() - t0 });
+    showError(`HTTP ${res.status}: ${text.trim()}`);
+    return;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "", done = false;
+  while (!done) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buf += decoder.decode(chunk.value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf("\n\n")) !== -1) {
+      const event = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      // SSE: join multiple data: lines with "\n"; strip one optional space after the colon.
+      const data = event.split("\n").filter((l) => l.startsWith("data:"))
+        .map((l) => { const v = l.slice(5); return v.startsWith(" ") ? v.slice(1) : v; }).join("\n");
+      if (data === "[DONE]") { done = true; break; }
+      if (ttft == null) ttft = performance.now() - t0;
+      ans.textContent += data;
+    }
+  }
+  const total = performance.now() - t0;
+  record({ mode: "stream", query: body.query, ok: true, status: res.status, latency: total, ttft });
+  $("badges").replaceChildren(badge("mode", "stream"), badge("first token", fmt(ttft) + " ms"), badge("total", fmt(total) + " ms"));
+  $("res-desc").textContent = "Streamed via SSE. Times measured in the browser.";
+}
+
+async function send(body, forceMode) {
+  if (busy || !body.query) return;
+  busy = true;
+  setBusy(true);
+  try {
+    if ((forceMode || mode) === "stream") await sendStream(body);
+    else await sendJSON(body);
+  } finally {
+    busy = false;
+    setBusy(false);
+  }
+}
+function setBusy(on) {
+  for (const b of document.querySelectorAll("#send, #run-all, #presets button")) b.disabled = on;
+  $("send-hint").textContent = on ? "Waiting for the server…" : "";
+}
+
+// ---------- wiring ----------
+$("ask").addEventListener("submit", (e) => { e.preventDefault(); send(readForm()); });
+$("query").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(readForm()); }
+});
+for (const b of document.querySelectorAll(".seg button")) {
+  b.addEventListener("click", () => {
+    mode = b.dataset.mode;
+    for (const o of document.querySelectorAll(".seg button")) o.setAttribute("aria-pressed", String(o === b));
+  });
+}
+for (const p of PRESETS) {
+  const b = el("button", { type: "button", class: "chip" }, p.label);
+  b.title = JSON.stringify(p.body);
+  b.addEventListener("click", () => { fillForm(p.body); send(p.body); });
+  $("presets").append(b);
+}
+$("run-all").addEventListener("click", async () => {
+  for (const p of PRESETS) {
+    fillForm(p.body);
+    await send(p.body, "json");
+  }
+});
+$("clear").addEventListener("click", () => {
+  if (!history.length || !confirm("Clear the request history in this browser?")) return;
+  history = []; save(); renderAll();
+});
+$("export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(history, null, 2)], { type: "application/json" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: "vogueflow-requests.json" });
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$("theme").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("vogueflow.theme", root.dataset.theme); } catch (_) {}
+  renderCharts();
+});
+try { const t = localStorage.getItem("vogueflow.theme"); if (t) document.documentElement.dataset.theme = t; } catch (_) {}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderCharts);
+
+let resizeTimer;
+new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderCharts, 80); }).observe(document.querySelector("main"));
+
+async function checkHealth() {
+  const h = $("health");
+  try {
+    const r = await fetch("/health");
+    h.className = "health " + (r.ok ? "ok" : "down");
+    h.lastElementChild.textContent = r.ok ? "API healthy" : "API error " + r.status;
+  } catch (_) {
+    h.className = "health down";
+    h.lastElementChild.textContent = "API unreachable";
+  }
+}
+checkHealth();
+setInterval(checkHealth, 15000);
+renderAll();
+</script>
+</body>
+</html>

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/nikzayn/vogueflow/internal/pinecone"
 )
 
@@ -39,13 +40,16 @@ func main() {
 	file := flag.String("file", "data/catalog.json", "path to catalog JSON")
 	flag.Parse()
 
+	// Read .env from the working directory (variables already set take precedence)
+	_ = godotenv.Load()
+
 	apiKey, host := os.Getenv("PINECONE_API_KEY"), os.Getenv("PINECONE_INDEX_HOST")
 	model := os.Getenv("PINECONE_EMBED_MODEL")
 	if model == "" {
 		model = "llama-text-embed-v2"
 	}
 	if apiKey == "" || host == "" {
-		log.Fatal("PINECONE_API_KEY and PINECONE_INDEX_HOST are required (run via `make ingest` to load .env)")
+		log.Fatal("PINECONE_API_KEY and PINECONE_INDEX_HOST are required (set them in .env)")
 	}
 
 	raw, err := os.ReadFile(*file)
@@ -57,7 +61,7 @@ func main() {
 		log.Fatalf("parse catalog: %v", err)
 	}
 
-	pc := pinecone.NewClient(apiKey, host, model)
+	pc := pinecone.NewClient(apiKey, host, model, 60*time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 

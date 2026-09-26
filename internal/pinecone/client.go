@@ -30,7 +30,7 @@ type Client struct {
 }
 
 // NewClient creates a Pinecone client.
-func NewClient(apiKey, indexHost, embedModel string) *Client {
+func NewClient(apiKey, indexHost, embedModel string, timeout time.Duration) *Client {
 	apiKey = strings.TrimSpace(apiKey)
 	indexHost = strings.TrimSpace(indexHost)
 
@@ -56,7 +56,7 @@ func NewClient(apiKey, indexHost, embedModel string) *Client {
 		indexHost:  indexHost,
 		embedModel: embedModel,
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: timeout,
 			Transport: &http.Transport{
 				MaxIdleConns:        500,
 				MaxIdleConnsPerHost: 500,

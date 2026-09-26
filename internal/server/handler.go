@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,13 +25,14 @@ type Embedder interface {
 
 // Handler holds HTTP handlers for the VogueFlow API
 type Handler struct {
-	orchestrator *agents.Orchestrator
-	embedder     Embedder
+	orchestrator   *agents.Orchestrator
+	embedder       Embedder
+	requestTimeout time.Duration
 }
 
 // NewHandler creates an HTTP handler
-func NewHandler(orch *agents.Orchestrator, embedder Embedder) *Handler {
-	return &Handler{orchestrator: orch, embedder: embedder}
+func NewHandler(orch *agents.Orchestrator, embedder Embedder, requestTimeout time.Duration) *Handler {
+	return &Handler{orchestrator: orch, embedder: embedder, requestTimeout: requestTimeout}
 }
 
 // maxBodyBytes caps request bodies; a shopping query is a few hundred bytes
@@ -107,6 +109,27 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/v1/shop", h.handleShop)
 	mux.HandleFunc("/v1/shop/stream", h.handleShopStream)
 	mux.HandleFunc("/health", h.handleHealth)
+	mux.HandleFunc("/", h.handleUI)
+}
+
+// indexHTML is the browser console (query panel + metrics dashboard), compiled into the binary
+//
+//go:embed web/index.html
+var indexHTML []byte
+
+// handleUI serves the console at "/"; any other unmatched path is a 404
+func (h *Handler) handleUI(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Write(indexHTML)
 }
 
 // handleShop handles synchronous shopping queries
@@ -121,7 +144,7 @@ func (h *Handler) handleShop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), h.requestTimeout)
 	defer cancel()
 
 	query, err := h.buildQuery(ctx, req)
@@ -167,7 +190,7 @@ func (h *Handler) handleShopStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), h.requestTimeout)
 	defer cancel()
 
 	query, err := h.buildQuery(ctx, req)

@@ -46,7 +46,7 @@ Both endpoints take a raw JSON body and require `Content-Type: application/json`
 | `internal/llm` | Claude Messages API client (sync + SSE streaming) and the 3-tier cascade |
 | `internal/pinecone` | REST client: query, upsert, embed |
 | `internal/cache` | semantic cache (embedding similarity) and token cache (exact prompt hash) |
-| `internal/server` | HTTP handlers |
+| `internal/server` | HTTP handlers, plus the embedded browser console (`web/index.html`) served at `/` |
 | `scripts/loadtest.py` | async load generator (keep RPS low — cache misses cost money) |
 
 ## Run locally
@@ -71,6 +71,18 @@ curl -N -X POST localhost:8080/v1/shop/stream \
   -d '{"query":"help me build a date night outfit"}'
 make test
 ```
+
+### Browser console
+
+With the server running, open http://localhost:8080/ for a small UI (served by the Go
+binary from `internal/server/web/index.html`, no build step):
+
+- send queries in JSON or streaming mode, or click a preset scenario ("Run all scenarios" fires each once)
+- see the answer, intent / tier / tokens / cache badges, and the ranked products (outfit items highlighted)
+- charts of latency and tokens per request (cache hits in orange), requests by model tier and by intent,
+  KPI tiles (cache hit rate, avg / p95 latency, total tokens) and a request log you can export as JSON
+
+History is kept in your browser's localStorage; "Clear history" resets it.
 
 The catalog in `data/catalog.json` is synthetic. To use other data, produce a JSON array
 with the same fields (`id, name, description, category, price, colors, sizes, in_stock,
